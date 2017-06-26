@@ -6,8 +6,10 @@ pipeline {
         sh 'sbt fullOptJS'
       }
     }
-  }
-  environment {
-    jioj = 'j'
+    stage('') {
+      steps {
+        archiveArtifacts(artifacts: 'target/scala-2.12/purplerain-scalajs-opt.js', onlyIfSuccessful: true)
+      }
+    }
   }
 }
