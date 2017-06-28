@@ -5,7 +5,8 @@ pipeline {
       steps {
         parallel(
           "Compile": {
-            sh 'sbt fullOptJS'
+            sh '''sbt fullOptJS
+echo "ut2"'''
             
           },
           "HTML": {
