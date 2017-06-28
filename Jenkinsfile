@@ -21,7 +21,7 @@ cp app.html tmp/'''
             
           },
           "HTML": {
-            sh '''sed 's/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js">/' tmp/app.html > tmp/app2.html
+            sh '''sed 's/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js"><\\/script>/' tmp/app.html > tmp/app2.html
 rm tmp/app.html
 mv tmp/app2.html tmp/app.html'''
             
