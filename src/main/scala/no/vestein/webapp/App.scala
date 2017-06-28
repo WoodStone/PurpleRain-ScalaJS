@@ -14,14 +14,15 @@ object App extends JSApp {
   type Ctx2D = dom.CanvasRenderingContext2D
 
   var prevTime: Double = js.Date.now()
-  val dropList: List[Drop] = createDropList(1, 300)
-  val canvas: Canvas = Canvas(800, 600)
+  val dropList: List[Drop] = createDropList(1, 300, window.innerWidth.toInt, window.innerHeight.toInt)
+  val canvas: Canvas = Canvas(window.innerWidth.toInt, window.innerHeight.toInt)
+
 
   override def main(): Unit = {
     window.addEventListener("keydown", keypush)
-    println(dropList)
     dom.window.setInterval(() => gameLoop(), 1)
 
+    canvas.canvas.style.display = "block"
     document.body.appendChild(canvas.canvas)
   }
 
@@ -50,30 +51,13 @@ object App extends JSApp {
     dropList.foreach(drop => drop.render(ctx))
   }
 
-  def initCanvas(): dom.html.Canvas = {
-    val canvas: dom.html.Canvas = document.createElement("canvas").asInstanceOf[dom.html.Canvas]
-    val ctx: Ctx2D = canvas.getContext("2d").asInstanceOf[Ctx2D]
-    val n: Int = 400
-
-    canvas.width = n
-    canvas.height= n
-
-    ctx.fillStyle = "black"
-    ctx.fillRect(0, 0, n, n)
-
-    ctx.fillStyle = "red"
-    ctx.fillRect(200, 200, 20, 20)
-
-    canvas
-  }
-
-  def createDropList(sizeFactor: Int, amount: Int): List[Drop] = {
+  def createDropList(sizeFactor: Int, amount: Int, width: Int, height: Int): List[Drop] = {
 
     @tailrec def rec(acc: List[Drop], n: Int): List[Drop] = {
       if (n == 0) return acc
 
-      val x: Float = Math.random().toFloat * 800.0f - 16.0f
-      val y: Float = Math.random().toFloat * 800.0f - 16.0f
+      val x: Float = Math.random().toFloat * width - 16.0f
+      val y: Float = Math.random().toFloat * height - 16.0f
 
       return rec(Drop(Vector2D(x, y), Vector2D(0, Math.random().toFloat * 0.2f)) :: acc, n - 1)
     }
@@ -107,7 +91,7 @@ case class Drop(position: Vector2D, velocity: Vector2D) {
 
   def render(ctx: Ctx2D): Unit = {
     ctx.fillStyle = "purple"
-    ctx.fillRect(position.x, position.y, 2, 10)
+    ctx.fillRect(position.x, position.y, 2, 10 * (1 + 4 * velocity.y))
   }
 
   def update(delta: Double, canvas: Canvas): Unit = {
