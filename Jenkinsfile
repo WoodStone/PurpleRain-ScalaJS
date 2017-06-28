@@ -20,8 +20,10 @@ cp app.html tmp/'''
             sh 'sbt fullOptJS'
             
           },
-          "": {
-            sh 'sed \'s/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js">/\' tmp/app.html > tmp/app.html'
+          "error": {
+            sh '''sed 's/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js">/' tmp/app.html > tmp/app2.html
+rm app.html
+mv app2.html app.html'''
             
           }
         )
