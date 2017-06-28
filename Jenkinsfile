@@ -13,7 +13,7 @@ echo "ut2"'''
             sh '''rm -rf tmp
 mkdir tmp
 cp app.html tmp/
-sed 's/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js">/' tmp/app.html > tmp/app2.html'''
+sed 's/<script.*/<script type="text\\/javascript" src="purplerain-scalajs-opt.js">/' tmp/app.html > tmp/app.html'''
             
           }
         )
