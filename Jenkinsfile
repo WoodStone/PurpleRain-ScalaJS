@@ -14,7 +14,7 @@ echo "ut2"'''
 mkdir tmp
 cp app.html tmp/
 sed 's/<script.*/<script type="text/javascript" src="purplerain-scalajs-opt.js">/' tmp/app.html > tmp/app2.html
-echo wut'''
+echo wut\\'''
             
           }
         )
