@@ -1,6 +1,6 @@
 package no.vestein.webapp
 
-import no.vestein.webapp.App.Ctx2D
+import no.vestein.webapp.App.{Canvas, Ctx2D}
 import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.Node
@@ -12,18 +12,18 @@ import scala.scalajs.js.JSApp
 
 object App extends JSApp {
   type Ctx2D = dom.CanvasRenderingContext2D
+  type Canvas = dom.html.Canvas
 
   var prevTime: Double = js.Date.now()
   val dropList: List[Drop] = createDropList(1, 300, window.innerWidth.toInt, window.innerHeight.toInt)
-  val canvas: Canvas = Canvas(window.innerWidth.toInt, window.innerHeight.toInt)
-
+  val screen: Screen = Screen(window.innerWidth.toInt, window.innerHeight.toInt)
 
   override def main(): Unit = {
     window.addEventListener("keydown", keypush)
     dom.window.setInterval(() => gameLoop(), 1)
 
-    canvas.canvas.style.display = "block"
-    document.body.appendChild(canvas.canvas)
+    screen.canvas.style.display = "block"
+    document.body.appendChild(screen.canvas)
   }
 
   def gameLoop(): Unit = {
@@ -37,16 +37,16 @@ object App extends JSApp {
     }
   }
 
-  def update(d: Double) = {
-    dropList.foreach(_.update(d, canvas))
+  def update(d: Double): Unit = {
+    dropList.foreach(_.update(d, screen.canvas))
   }
 
   def render(): Unit = {
-    val ctx: Ctx2D = canvas.ctx
+    val ctx: Ctx2D = screen.ctx
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    canvas.ctx.fillStyle = "#E6E6FA"
-    canvas.ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, screen.canvas.width, screen.canvas.height)
+    screen.ctx.fillStyle = "#E6E6FA"
+    screen.ctx.fillRect(0, 0, screen.canvas.width, screen.canvas.height)
 
     dropList.foreach(drop => drop.render(ctx))
   }
@@ -59,7 +59,7 @@ object App extends JSApp {
       val x: Float = Math.random().toFloat * width - 16.0f
       val y: Float = Math.random().toFloat * height - 16.0f
 
-      return rec(Drop(Vector2D(x, y), Vector2D(0, Math.random().toFloat * 0.2f)) :: acc, n - 1)
+      return rec(Drop(Vector2D(x, y), Vector2D(0, randomFloat(0.1f, 0.3f))) :: acc, n - 1)
     }
 
     return rec(Nil, amount)
@@ -67,19 +67,15 @@ object App extends JSApp {
 
   def keypush(e: dom.KeyboardEvent): Unit = {
     println(e.keyCode)
-    appendP(document.body, e.keyCode.toString)
   }
 
-  def appendP(targetNode: Node, text: String): Unit = {
-    val parentNode = document.createElement("p")
-    val textNode = document.createTextNode(text)
-    parentNode.appendChild(textNode)
-    targetNode.appendChild(parentNode)
+  def randomFloat(min: Float, max: Float): Float = {
+    (min + Math.random() * (max - min)).toFloat
   }
 
 }
 
-case class Canvas(width: Int, height: Int, canvas: dom.html.Canvas = document.createElement("canvas").asInstanceOf[dom.html.Canvas]) {
+case class Screen(width: Int, height: Int, canvas: dom.html.Canvas = document.createElement("canvas").asInstanceOf[dom.html.Canvas]) {
   val ctx: Ctx2D = canvas.getContext("2d").asInstanceOf[Ctx2D]
   canvas.width = width
   canvas.height = height
