@@ -1,6 +1,6 @@
 package no.vestein.webapp
 
-import no.vestein.webapp.App.{Canvas, Ctx2D}
+import no.vestein.webapp.App.{Canvas, Ctx2D, grid, screen}
 import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.Node
@@ -14,8 +14,12 @@ object App extends JSApp {
   type Ctx2D = dom.CanvasRenderingContext2D
   type Canvas = dom.html.Canvas
 
+  var grid: Boolean = false
+  var debug: Boolean = false
   var prevTime: Double = js.Date.now()
-  val dropList: List[Drop] = createDropList(1, 300, Vector2D(100, 100), Vector2D(window.innerWidth.toInt - 200, window.innerHeight.toInt - 200))
+
+  val gridSize: Double = 100
+  val dropList: List[Drop] = createDropList(1, 600, Vector2D(0, 0), Vector2D(window.innerWidth.toInt, window.innerHeight.toInt))
   val screen: Screen = Screen(window.innerWidth.toInt, window.innerHeight.toInt)
 
   /**
@@ -57,14 +61,22 @@ object App extends JSApp {
   def render(): Unit = {
     val ctx: Ctx2D = screen.ctx
 
+    def debugLines(): Unit = {
+      if (debug) {
+        ctx.strokeStyle = "red"
+        ctx.strokeRect(100, 100, screen.width - 200, screen.height - 200)
+      }
+    }
+
     ctx.clearRect(0, 0, screen.canvas.width, screen.canvas.height)
     ctx.fillStyle = "#E6E6FA"
     ctx.fillRect(0, 0, screen.canvas.width, screen.canvas.height)
 
-    ctx.strokeStyle = "red"
-    ctx.strokeRect(100, 100, screen.width - 200, screen.height - 200)
 
-    dropList.foreach(drop => drop.render(ctx))
+    if (grid) Grid(screen, gridSize).render()
+    debugLines()
+
+    dropList.foreach(_.render(ctx))
   }
 
   /**
@@ -80,10 +92,17 @@ object App extends JSApp {
     @tailrec def rec(acc: List[Drop], n: Int): List[Drop] = {
       if (n == 0) return acc
 
-      val x: Float = pos.x + Math.random().toFloat * dim.x
-      val y: Float = pos.y + Math.random().toFloat * dim.y
+      val x: Double = pos.x + Math.random() * dim.x
+      val y: Double = pos.y + Math.random() * dim.y
 
-      return rec(Drop(Vector2D(x, y), Vector2D(0, randomFloat(0.1f, 0.3f)), pos, dim) :: acc, n - 1)
+      val prop: Double = Math.random() * 100
+      val v: Double = prop match {
+        case x if x < 50 => 0.1f
+        case x if x >= 50 && x < 80 => 0.2f
+        case x if x >= 80 => 0.3f
+      }
+
+      return rec(Drop(Vector2D(x, y), Vector2D(0, v + randomDouble(0.025f, 0.050f)), pos, dim) :: acc, n - 1)
     }
 
     return rec(Nil, amount)
@@ -101,6 +120,9 @@ object App extends JSApp {
     e.keyCode match {
       case 13 => println(dropList.filter(_.mark))
       case 38 => dropList.head.mark = !dropList.head.mark
+      case 68 => debug = !debug
+      case 71 => grid = !grid
+      case _ => //No match
     }
   }
 
@@ -110,8 +132,41 @@ object App extends JSApp {
     * @param max Maximum value
     * @return a pseudorandom.
     */
-  def randomFloat(min: Float, max: Float): Float = {
-    (min + Math.random() * (max - min)).toFloat
+  def randomDouble(min: Double, max: Double): Double = min + Math.random() * (max - min)
+
+}
+
+case class Grid(screen: Screen, size: Double) {
+
+  def render(): Unit = {
+    val ctx: Ctx2D = screen.ctx
+    val width: Int = screen.width
+    val height: Int = screen.height
+
+    ctx.strokeStyle = "grey"
+    ctx.lineWidth = 0.5f
+    ctx.beginPath()
+    drawHorizontal()
+    drawVertical()
+    ctx.stroke()
+    ctx.closePath()
+
+    def line(x: Double, y: Double, x2: Double, y2: Double): Unit = {
+      ctx.moveTo(x, y)
+      ctx.lineTo(x2, y2)
+    }
+
+    def drawHorizontal(): Unit = {
+      for ( a <- 0 to Math.floor( height / size ).toInt ) {
+        line(0, size * a, width, size * a)
+      }
+    }
+
+    def drawVertical(): Unit = {
+      for ( a <- 0 to Math.floor( width / size ).toInt ) {
+        line(size * a, 0, size * a, height)
+      }
+    }
   }
 
 }
@@ -127,7 +182,13 @@ case class Screen(width: Int, height: Int, canvas: dom.html.Canvas = document.cr
   * @param x
   * @param y
   */
-case class Vector2D(var x: Float, var y: Float)
+case class Vector2D(var x: Double, var y: Double) {
+
+  def +(o: Vector2D): Vector2D = Vector2D(x + o.x, y + o.y)
+  def -(o: Vector2D): Vector2D = Vector2D(x - o.x, y - o.y)
+  def length: Double = Math.sqrt(x * x + y * y)
+
+}
 
 /**
   * Representation of a falling drop.
@@ -146,7 +207,7 @@ case class Drop(position: Vector2D, velocity: Vector2D, boxPos: Vector2D, boxDim
   def render(ctx: Ctx2D): Unit = {
     ctx.fillStyle = "purple"
     if (mark) ctx.fillStyle = "lime"
-    ctx.fillRect(position.x, position.y, 2, 10 * (1 + 4 * velocity.y))
+    ctx.fillRect(position.x, position.y, 1.0f, 10 * (1 + 4 * velocity.y))
   }
 
   /**
@@ -154,10 +215,11 @@ case class Drop(position: Vector2D, velocity: Vector2D, boxPos: Vector2D, boxDim
     * @param delta Time passed.
     */
   def update(delta: Double): Unit = {
-    position.x = position.x + velocity.x * delta.toFloat
-    position.y = position.y + velocity.y * delta.toFloat
+    position.x = position.x + velocity.x * delta
+    position.y = position.y + velocity.y * delta
 
     if (position.y > boxPos.y + boxDim.y + 32.0f)  {
+      //TODO new x position
       position.y = position.y - boxDim.y - 64.0f
     }
   }
