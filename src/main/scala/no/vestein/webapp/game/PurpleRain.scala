@@ -1,14 +1,17 @@
-package no.vestein.webapp
+package no.vestein.webapp.game
 
 import no.vestein.webapp.App.Ctx2D
-import org.scalajs.dom
+import no.vestein.webapp.core.{Game, Screen, Vector2D}
+import no.vestein.webapp.eventhandler.events.{KeyEvent}
+import no.vestein.webapp.eventhandler.{EventBus, EventListener}
 import org.scalajs.dom.window
 
 import scala.annotation.tailrec
 
-class Game {
+class PurpleRain extends Game with EventListener[KeyEvent] {
+  EventBus.register(classOf[KeyEvent], this)
 
-  val dropList: List[Drop] = createDropList(1, 600, Vector2D(0, 0), Vector2D(window.innerWidth.toInt, window.innerHeight.toInt))
+  val dropList: List[Drop] = createDropList(1, 600, Vector2D(-64.0f, 0), Vector2D(window.innerWidth.toInt + 32.0f, window.innerHeight.toInt))
 
   var grid: Boolean = false
   var debug: Boolean = false
@@ -23,23 +26,24 @@ class Game {
 
     if (grid) Grid(screen, gridSize).render()
 
+    ctx.lineWidth = 1.0f
     dropList.foreach(_.render(ctx))
 
   }
 
   def update(delta: Double, keys: Set[Int]): Unit = {
+    dropList.foreach(_.update(delta))
+  }
 
-    if (keys.nonEmpty) println(keys)
-
-    keys.foreach {
-      case 13 => println(dropList.filter(_.mark))
-      case 38 => dropList.head.mark = !dropList.head.mark
+  override def invoke(event: KeyEvent): Unit = {
+    event.code match {
       case 68 => debug = !debug
       case 71 => grid = !grid
-      case _ => //No match
+      case 90 =>
+      case _ => {
+        if (debug) println(event.code)
+      }
     }
-
-    dropList.foreach(_.update(delta))
   }
 
   /**
@@ -67,7 +71,7 @@ class Game {
         case x if x >= 80 => 0.3f
       }
 
-      return rec(Drop(Vector2D(x, y), Vector2D(0, v + randomDouble(0.025f, 0.050f)), pos, dim) :: acc, n - 1)
+      return rec(Drop(Vector2D(x, y), Vector2D(0.025f, v + randomDouble(0.025f, 0.050f)), pos, dim) :: acc, n - 1)
     }
 
     return rec(Nil, amount)

@@ -1,4 +1,4 @@
-package no.vestein.webapp
+package no.vestein.webapp.core
 
 /**
   * Representation of a two-dimensional vector.

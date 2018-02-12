@@ -1,6 +1,7 @@
-package no.vestein.webapp
+package no.vestein.webapp.game
 
 import no.vestein.webapp.App.Ctx2D
+import no.vestein.webapp.core.Screen
 
 case class Grid(screen: Screen, size: Double) {
 
