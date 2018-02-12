@@ -11,7 +11,7 @@ import scala.annotation.tailrec
 class PurpleRain extends Game with EventListener[KeyEvent] {
   EventBus.register(classOf[KeyEvent], this)
 
-  val dropList: List[Drop] = createDropList(1, 600, Vector2D(-64.0f, 0), Vector2D(window.innerWidth.toInt + 32.0f, window.innerHeight.toInt))
+  val dropList: List[Drop] = Factory.createDropList(1, 600, Vector2D(-64.0f, 0), Vector2D(window.innerWidth.toInt + 32.0f, window.innerHeight.toInt))
 
   var grid: Boolean = false
   var debug: Boolean = false
@@ -45,22 +45,13 @@ class PurpleRain extends Game with EventListener[KeyEvent] {
       }
     }
   }
+  
 
-  /**
-    * Creates a list of Drop objects.
-    * @param sizeFactor
-    * @param amount
-    * @param pos
-    * @param dim
-    * @return
-    */
-  private def createDropList(sizeFactor: Int, amount: Int, pos: Vector2D, dim: Vector2D): List[Drop] = {
+  object Factory {
 
-    def randomDouble(min: Double, max: Double): Double = min + Math.random() * (max - min)
+    private def randomDouble(min: Double, max: Double): Double = min + Math.random() * (max - min)
 
-    @tailrec def rec(acc: List[Drop], n: Int): List[Drop] = {
-      if (n == 0) return acc
-
+    def createDrop(pos: Vector2D, dim: Vector2D): Drop = {
       val x: Double = pos.x + Math.random() * dim.x
       val y: Double = pos.y + Math.random() * dim.y
 
@@ -70,11 +61,18 @@ class PurpleRain extends Game with EventListener[KeyEvent] {
         case x if x >= 50 && x < 80 => 0.2f
         case x if x >= 80 => 0.3f
       }
-
-      return rec(Drop(Vector2D(x, y), Vector2D(0.025f, v + randomDouble(0.025f, 0.050f)), pos, dim) :: acc, n - 1)
+      Drop(Vector2D(x, y), Vector2D(0.025f, v + randomDouble(0.025f, 0.050f)), pos, dim)
     }
 
-    return rec(Nil, amount)
+
+    def createDropList(sizeFactor: Int, amount: Int, pos: Vector2D, dim: Vector2D): List[Drop] = {
+      @tailrec def rec(acc: List[Drop], n: Int): List[Drop] = {
+        if (n == 0) return acc
+        return rec(createDrop(pos, dim) :: acc, n - 1)
+      }
+      return rec(Nil, amount)
+    }
+
   }
 
 }
